@@ -253,6 +253,8 @@
 /* 4.1 WestfW: put version number in binary.		  */
 /**********************************************************/
 
+#include "eepa.h"
+
 #define OPTIBOOT_MAJVER 8
 #define OPTIBOOT_MINVER 1
 
@@ -711,12 +713,24 @@ int main(void) {
 #endif
 #endif
 
+  bool eepa_awake = true;
+  const EEPA_MY_ID = 0x41;
+
   /* Forever loop: exits by causing WDT reset */
   for (;;) {
     /* get character from UART */
     ch = getch();
 
-    if(ch == STK_GET_PARAMETER) {
+    if(ch == EEPA_START_COM) {// custom communication protocol
+        uint8_t eepa_id = getch();// next character is the ID of the device we want to talk to
+        eepa_awake = (eepa_id == EEPA_MY_ID);// set device as awake or not, by comparing the given ID to its own ID
+    }
+
+    else if( ! eepa_awake ) {// device has been set as not awake, we do not want to interact with it
+        // skip bootloader ?
+    }
+
+    else if(ch == STK_GET_PARAMETER) {
       unsigned char which = getch();
       verifySpace();
       /*
